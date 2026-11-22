@@ -1,0 +1,686 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Read and Choose</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  background: #f1f5ff;
+  color: #26324b;
+}
+
+header {
+  background: linear-gradient(135deg, #7055d9, #a16de8);
+  color: white;
+  text-align: center;
+  padding: 28px 15px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(27px, 5vw, 40px);
+}
+
+header p {
+  margin: 10px 0 0;
+  font-size: 16px;
+}
+
+.container {
+  max-width: 1150px;
+  margin: auto;
+  padding: 22px 16px 40px;
+}
+
+.instructions {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 22px;
+  box-shadow: 0 3px 12px #0000000d;
+  line-height: 1.6;
+}
+
+.instructions strong {
+  color: #7055d9;
+}
+
+h2 {
+  font-size: 23px;
+  margin: 25px 0 15px;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.panel {
+  background: white;
+  padding: 18px;
+  border-radius: 18px;
+  box-shadow: 0 4px 15px #0000000d;
+}
+
+.panel h2 {
+  margin-top: 0;
+  color: #7055d9;
+}
+
+.monster-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.monster-card {
+  border: 3px dashed #d9d5ed;
+  border-radius: 15px;
+  padding: 10px 6px;
+  text-align: center;
+  background: #faf9ff;
+  min-width: 0;
+  transition: .2s;
+  cursor: pointer;
+}
+
+.monster-card svg {
+  width: 100%;
+  max-width: 145px;
+  height: 125px;
+}
+
+.monster-card strong {
+  display: block;
+  margin: 4px 0 8px;
+  color: #5542a5;
+}
+
+.monster-card.over {
+  background: #e6f9ed;
+  border-color: #35b96a;
+  transform: scale(1.02);
+}
+
+.monster-card.correct {
+  border: 3px solid #35b96a;
+  background: #e9fff0;
+}
+
+.monster-card.wrong {
+  border: 3px solid #f17a7a;
+  background: #fff0f0;
+}
+
+.drop-zone {
+  min-height: 65px;
+  background: #f0eff8;
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 13px;
+  color: #6a6680;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.drop-zone.filled {
+  background: #e9e5ff;
+  color: #403278;
+  font-weight: bold;
+}
+
+.sentence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sentence-card {
+  padding: 14px;
+  border-radius: 13px;
+  background: #fff3d9;
+  border: 2px solid #f1d18a;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  line-height: 1.5;
+  font-size: 14px;
+  transition: .2s;
+}
+
+.sentence-card:hover {
+  background: #ffebbc;
+}
+
+.sentence-card.selected {
+  border: 3px solid #7055d9;
+  background: #eee8ff;
+}
+
+.sentence-card.placed {
+  display: none;
+}
+
+.sentence-card:active {
+  cursor: grabbing;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  width: min(270px, 75vw);
+  padding: 14px;
+  border-radius: 13px;
+  background: #fff3d9;
+  border: 2px solid #7055d9;
+  box-shadow: 0 8px 25px #0004;
+  pointer-events: none;
+  opacity: .95;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+
+button {
+  border: none;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.check-btn {
+  background: #7055d9;
+  color: white;
+}
+
+.reset-btn {
+  background: #e6e3f1;
+  color: #403278;
+}
+
+button:hover {
+  opacity: .88;
+  transform: translateY(-1px);
+}
+
+#result {
+  display: none;
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px;
+  background: #e8fff0;
+  border-radius: 15px;
+  font-size: 19px;
+  font-weight: bold;
+  color: #187d43;
+}
+
+#feedback {
+  text-align: center;
+  color: #7055d9;
+  min-height: 24px;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #85839a;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .monster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>👾 Monster Read and Choose!</h1>
+  <p>Read the sentences. Find the correct monster!</p>
+</header>
+
+<div class="container">
+
+  <div class="instructions">
+    <strong>🎯 YOUR MISSION</strong><br>
+    1. Look at the seven monster pictures.<br>
+    2. Read the sentence cards carefully.<br>
+    3. Drag each sentence to the correct monster.<br>
+    4. Click <strong>CHECK ANSWERS</strong> to see your score!
+    <br><br>
+    💡 You can also click a sentence card and then click a monster.
+  </div>
+
+  <div class="game-layout">
+
+    <!-- MONSTER PICTURES -->
+    <section class="panel">
+      <h2>👾 Monster Pictures</h2>
+      <p>Drag the correct sentence into each box.</p>
+      <div class="monster-grid" id="monsterGrid"></div>
+    </section>
+
+    <!-- SENTENCE CARDS -->
+    <section class="panel">
+      <h2>📖 Sentence Cards</h2>
+      <p>Read and match the descriptions.</p>
+      <div class="sentence-list" id="sentenceList"></div>
+    </section>
+
+  </div>
+
+  <div id="feedback">Choose a sentence to begin!</div>
+
+  <div class="controls">
+    <button class="check-btn" onclick="checkAnswers()">
+      ✓ CHECK ANSWERS
+    </button>
+    <button class="reset-btn" onclick="resetGame()">
+      ↻ TRY AGAIN
+    </button>
+  </div>
+
+  <div id="result"></div>
+
+</div>
+
+<footer>
+  English Fun Learning | Monster Vocabulary Activity
+</footer>
+
+<script>
+
+// MONSTER DATA
+const monsters = [
+  {id: 1, color: "#39bd69", eye: 1, ears: 0, hands: false, legs: false, nose: false},
+  {id: 2, color: "#f05252", eye: 2, ears: 2, hands: true, legs: false, nose: false},
+  {id: 3, color: "#a66be0", eye: 2, ears: 0, hands: false, legs: false, nose: false, topEyes: true},
+  {id: 4, color: "#f4d447", eye: 2, ears: 0, hands: false, legs: true, nose: false},
+  {id: 5, color: "#398de8", eye: 2, ears: 0, hands: false, legs: false, nose: true},
+  {id: 6, color: "#32bd82", eye: 2, ears: 2, hands: false, legs: false, nose: false},
+  {id: 7, color: "#428ce8", eye: 2, ears: 0, hands: false, legs: false, nose: false}
+];
+
+const sentences = [
+  {id: 1, text: "My body is green. I have one big eye."},
+  {id: 2, text: "My body is red. I have two round ears and two hands."},
+  {id: 3, text: "My body is purple. I have two eyes on top of my head."},
+  {id: 4, text: "My body is yellow. I have two eyes and two legs."},
+  {id: 5, text: "My body is blue. I have a big orange nose."},
+  {id: 6, text: "My body is green. I have two big ears and two eyes."},
+  {id: 7, text: "My body is blue."}
+];
+
+let placements = {};
+let selectedCard = null;
+let activeDrag = null;
+let ghost = null;
+let checked = false;
+
+// SHUFFLE CARDS
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+// CREATE MONSTER DRAWING
+function createMonster(m) {
+  let ears = "";
+  let eyes = "";
+  let hands = "";
+  let legs = "";
+  let nose = "";
+
+  if (m.ears === 2) {
+    const size = m.id === 6 ? 19 : 14;
+    ears = `
+      <ellipse cx="27" cy="79" rx="${size}" ry="${size + 5}" fill="${m.color}" stroke="#333" stroke-width="3"/>
+      <ellipse cx="173" cy="79" rx="${size}" ry="${size + 5}" fill="${m.color}" stroke="#333" stroke-width="3"/>
+    `;
+  }
+
+  if (m.eye === 1) {
+    eyes = `
+      <ellipse cx="100" cy="78" rx="27" ry="30" fill="white" stroke="#333" stroke-width="3"/>
+      <circle cx="100" cy="80" r="12" fill="#27334c"/>
+      <circle cx="105" cy="75" r="4" fill="white"/>
+    `;
+  } else if (m.topEyes) {
+    eyes = `
+      <ellipse cx="72" cy="24" rx="17" ry="20" fill="white" stroke="#333" stroke-width="3"/>
+      <ellipse cx="128" cy="24" rx="17" ry="20" fill="white" stroke="#333" stroke-width="3"/>
+      <circle cx="72" cy="27" r="7" fill="#27334c"/>
+      <circle cx="128" cy="27" r="7" fill="#27334c"/>
+    `;
+  } else {
+    eyes = `
+      <ellipse cx="73" cy="78" rx="17" ry="20" fill="white" stroke="#333" stroke-width="3"/>
+      <ellipse cx="127" cy="78" rx="17" ry="20" fill="white" stroke="#333" stroke-width="3"/>
+      <circle cx="73" cy="80" r="7" fill="#27334c"/>
+      <circle cx="127" cy="80" r="7" fill="#27334c"/>
+      <circle cx="77" cy="74" r="3" fill="white"/>
+      <circle cx="131" cy="74" r="3" fill="white"/>
+    `;
+  }
+
+  if (m.hands) {
+    hands = `
+      <path d="M45 130 L17 147 M155 130 L183 147" stroke="${m.color}" stroke-width="15" stroke-linecap="round"/>
+      <circle cx="16" cy="149" r="12" fill="${m.color}" stroke="#333" stroke-width="2"/>
+      <circle cx="184" cy="149" r="12" fill="${m.color}" stroke="#333" stroke-width="2"/>
+    `;
+  }
+
+  if (m.legs) {
+    legs = `
+      <path d="M73 160 L63 188 M127 160 L137 188" stroke="${m.color}" stroke-width="16" stroke-linecap="round"/>
+      <ellipse cx="58" cy="190" rx="17" ry="8" fill="${m.color}" stroke="#333" stroke-width="2"/>
+      <ellipse cx="142" cy="190" rx="17" ry="8" fill="${m.color}" stroke="#333" stroke-width="2"/>
+    `;
+  }
+
+  if (m.nose) {
+    nose = `
+      <ellipse cx="100" cy="115" rx="17" ry="22" fill="#ff922e" stroke="#333" stroke-width="3"/>
+      <ellipse cx="94" cy="107" rx="5" ry="4" fill="#ffc078"/>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 200 205" role="img" aria-label="Monster ${m.id}">
+      ${ears}
+      ${hands}
+      ${legs}
+      <path d="M100 20
+        C145 20 165 50 165 105
+        C165 155 140 170 100 170
+        C60 170 35 155 35 105
+        C35 50 55 20 100 20Z"
+        fill="${m.color}" stroke="#333" stroke-width="3"/>
+      ${eyes}
+      ${nose}
+      <path d="M83 139 Q100 150 117 139"
+        fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+// RENDER GAME
+function renderGame() {
+  const monsterGrid = document.getElementById("monsterGrid");
+  const sentenceList = document.getElementById("sentenceList");
+
+  monsterGrid.innerHTML = "";
+  sentenceList.innerHTML = "";
+
+  monsters.forEach(m => {
+    const card = document.createElement("div");
+    card.className = "monster-card";
+    card.dataset.monster = m.id;
+
+    card.innerHTML = `
+      ${createMonster(m)}
+      <strong>Monster ${String.fromCharCode(64 + m.id)}</strong>
+      <div class="drop-zone" id="drop-${m.id}">
+        Drop sentence here
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      if (selectedCard) {
+        placeSentence(selectedCard, m.id);
+      }
+    });
+
+    monsterGrid.appendChild(card);
+  });
+
+  shuffle(sentences).forEach(s => {
+    const card = document.createElement("div");
+    card.className = "sentence-card";
+    card.dataset.sentence = s.id;
+    card.textContent = "📝 " + s.text;
+
+    card.addEventListener("pointerdown", startDrag);
+
+    sentenceList.appendChild(card);
+  });
+}
+
+// DRAG AND DROP: MOUSE + TOUCH
+function startDrag(e) {
+  if (checked) return;
+
+  const card = e.currentTarget;
+  if (card.classList.contains("placed")) return;
+
+  e.preventDefault();
+
+  selectedCard = card;
+  card.classList.add("selected");
+
+  activeDrag = {
+    card: card,
+    x: e.clientX,
+    y: e.clientY
+  };
+
+  ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  ghost.textContent = card.textContent;
+  document.body.appendChild(ghost);
+  moveGhost(e.clientX, e.clientY);
+
+  document.addEventListener("pointermove", moveDrag);
+  document.addEventListener("pointerup", endDrag, {once: true});
+}
+
+function moveGhost(x, y) {
+  if (!ghost) return;
+  ghost.style.left = (x + 10) + "px";
+  ghost.style.top = (y + 10) + "px";
+}
+
+function moveDrag(e) {
+  if (!activeDrag) return;
+
+  moveGhost(e.clientX, e.clientY);
+
+  document.querySelectorAll(".monster-card").forEach(card => {
+    card.classList.remove("over");
+  });
+
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  const monsterCard = target?.closest(".monster-card");
+
+  if (monsterCard) monsterCard.classList.add("over");
+}
+
+function endDrag(e) {
+  document.removeEventListener("pointermove", moveDrag);
+
+  if (!activeDrag) return;
+
+  if (ghost) ghost.remove();
+  ghost = null;
+
+  document.querySelectorAll(".monster-card").forEach(card => {
+    card.classList.remove("over");
+  });
+
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  const monsterCard = target?.closest(".monster-card");
+
+  if (monsterCard) {
+    placeSentence(activeDrag.card, Number(monsterCard.dataset.monster));
+  } else {
+    activeDrag.card.classList.remove("selected");
+    selectedCard = null;
+  }
+
+  activeDrag = null;
+}
+
+// PLACE SENTENCE
+function placeSentence(card, monsterId) {
+  if (!card || checked) return;
+
+  const sentenceId = Number(card.dataset.sentence);
+
+  // Remove old placement of this sentence
+  Object.keys(placements).forEach(key => {
+    if (placements[key] === sentenceId) {
+      delete placements[key];
+      const oldZone = document.getElementById("drop-" + key);
+      oldZone.textContent = "Drop sentence here";
+      oldZone.classList.remove("filled");
+      document.querySelector(
+        `[data-monster="${key}"]`
+      )?.classList.remove("correct", "wrong");
+    }
+  });
+
+  // Replace any existing sentence in the target
+  if (placements[monsterId]) {
+    const oldId = placements[monsterId];
+    const oldCard = document.querySelector(
+      `[data-sentence="${oldId}"]`
+    );
+    oldCard?.classList.remove("placed");
+    delete placements[monsterId];
+  }
+
+  placements[monsterId] = sentenceId;
+
+  card.classList.remove("selected");
+  card.classList.add("placed");
+
+  const zone = document.getElementById("drop-" + monsterId);
+  zone.textContent = sentences.find(s => s.id === sentenceId).text;
+  zone.classList.add("filled");
+
+  selectedCard = null;
+
+  document.getElementById("feedback").textContent =
+    "Great! Keep matching the monsters! ⭐";
+
+  document.getElementById("result").style.display = "none";
+  document.querySelectorAll(".monster-card").forEach(c => {
+    c.classList.remove("correct", "wrong");
+  });
+}
+
+// CHECK ANSWERS
+function checkAnswers() {
+  let score = 0;
+
+  monsters.forEach(m => {
+    const card = document.querySelector(
+      `[data-monster="${m.id}"]`
+    );
+
+    card.classList.remove("correct", "wrong");
+
+    if (placements[m.id] === m.id) {
+      score++;
+      card.classList.add("correct");
+    } else {
+      card.classList.add("wrong");
+    }
+  });
+
+  checked = true;
+
+  const result = document.getElementById("result");
+  result.style.display = "block";
+
+  let message = "";
+
+  if (score === 7) {
+    message = "🏆 Excellent! You matched all the monsters!";
+  } else if (score >= 4) {
+    message = "👏 Good job! Keep practicing!";
+  } else {
+    message = "💪 Nice try! Read the sentences again!";
+  }
+
+  result.innerHTML = `
+    ${message}<br>
+    Your Score: ${score} / 7
+  `;
+
+  document.getElementById("feedback").textContent =
+    "Green = Correct | Red = Try again!";
+
+  // Show all cards again when checking
+  document.querySelectorAll(".sentence-card").forEach(card => {
+    card.classList.remove("placed", "selected");
+  });
+
+  monsters.forEach(m => {
+    const zone = document.getElementById("drop-" + m.id);
+    if (placements[m.id] !== undefined) {
+      zone.textContent = sentences.find(
+        s => s.id === placements[m.id]
+      ).text;
+    }
+  });
+}
+
+// RESET GAME
+function resetGame() {
+  placements = {};
+  selectedCard = null;
+  activeDrag = null;
+  checked = false;
+
+  if (ghost) ghost.remove();
+  ghost = null;
+
+  document.getElementById("feedback").textContent =
+    "Choose a sentence to begin!";
+
+  document.getElementById("result").style.display = "none";
+
+  renderGame();
+}
+
+// START
+renderGame();
+
+</script>
+
+</body>
+</html>
